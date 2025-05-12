@@ -370,11 +370,55 @@ def generate_kg_from_clean_dataset(
 
 
 if __name__ == "__main__":
-    splits = ["train", "test", "validation"]
-    # for split in splits:
-    #     # TODO: cache if files already exist, don't execute
-    #     retrieve_articles_for_split(split)
-    #     clean_rows_article_no_response(split)
+    # Original main block commented out for single article test
+    # splits = ["train", "test", "validation"]
+    # # for split in splits:
+    # #     # TODO: cache if files already exist, don't execute
+    # #     retrieve_articles_for_split(split)
+    # #     clean_rows_article_no_response(split)
 
-    for split in ["test"]:
-        generate_kg_from_clean_dataset(split, thread_count=1)
+    # for split in ["test"]:
+    #     generate_kg_from_clean_dataset(split, thread_count=1)
+
+    # --- New code for single article KG generation test ---
+    target_article_title = "African immigration to the United States"
+    gemini_api_key = "AIzaSyDbCHsZIwEadnJ0H0uMQPNzyqbBwVpCK24" # Key provided by user
+
+    print(f"Attempting to generate KG for single article: {target_article_title}")
+
+    kg = KGGen() # Initialize KGGen
+
+    # Construct path to the article file
+    # OUTPUT_ARTICLES_DIR and sanitize_filename are defined above in the script
+    sanitized_title = sanitize_filename(target_article_title)
+    article_path = os.path.join(OUTPUT_ARTICLES_DIR, f"{sanitized_title}.txt")
+
+    if os.path.exists(article_path):
+        try:
+            with open(article_path, "r", encoding="utf-8") as f:
+                article_text = f.read()
+            
+            print(f"Generating KG for '{target_article_title}' using Gemini model...")
+            # Use settings similar to generate_kg_from_clean_dataset
+            graph = kg.generate(
+                input_data=article_text,
+                model="gemini/gemini-2.5-flash-preview-04-17", # Model used in the script
+                api_key=gemini_api_key,
+                chunk_size=2048 # Chunk size used in the script
+            )
+            
+            print("\\n--- Generated Knowledge Graph ---")
+            print(f"Entities: {graph.entities}")
+            print(f"Edges: {graph.edges}")
+            print(f"Relations: {graph.relations}")
+            if graph.entity_clusters:
+                print(f"Entity Clusters: {graph.entity_clusters}")
+            if graph.edge_clusters:
+                print(f"Edge Clusters: {graph.edge_clusters}")
+            print("--- End of Knowledge Graph ---")
+
+        except Exception as e:
+            print(f"Error generating KG for '{target_article_title}': {e}")
+    else:
+        print(f"Article file not found: {article_path}")
+    # --- End of new code ---
